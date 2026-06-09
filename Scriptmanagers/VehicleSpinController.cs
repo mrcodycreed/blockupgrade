@@ -7,6 +7,9 @@ public class VehicleSpinController : MonoBehaviour
     {
         public Transform part;
         public Vector3 axis = Vector3.right;
+
+        [System.NonSerialized]
+        public Vector3 normalizedAxis = Vector3.right;
     }
 
     public SpinPart[] spinParts;
@@ -15,24 +18,33 @@ public class VehicleSpinController : MonoBehaviour
     public float speed = 360f;
     public int direction = 1; // 1 = forward, -1 = backward
 
+    void Awake()
+    {
+        CacheSpinAxes();
+    }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        CacheSpinAxes();
+    }
+#endif
+
     void Update()
     {
-        if (!isSpinning)
+        if (!isSpinning || spinParts == null)
             return;
+
+        float angle = speed * direction * Time.deltaTime;
 
         foreach (SpinPart spinPart in spinParts)
         {
             if (spinPart == null || spinPart.part == null)
                 continue;
 
-            Vector3 axis = spinPart.axis;
-
-            if (axis == Vector3.zero)
-                axis = Vector3.right;
-
             spinPart.part.Rotate(
-                axis.normalized,
-                speed * direction * Time.deltaTime,
+                spinPart.normalizedAxis,
+                angle,
                 Space.Self
             );
         }
@@ -54,5 +66,24 @@ public class VehicleSpinController : MonoBehaviour
     public void StopSpin()
     {
         isSpinning = false;
+    }
+
+    void CacheSpinAxes()
+    {
+        if (spinParts == null)
+            return;
+
+        foreach (SpinPart spinPart in spinParts)
+        {
+            if (spinPart == null)
+                continue;
+
+            Vector3 axis = spinPart.axis;
+
+            if (axis == Vector3.zero)
+                axis = Vector3.right;
+
+            spinPart.normalizedAxis = axis.normalized;
+        }
     }
 }
