@@ -6,12 +6,21 @@ public class BE2_Cst_MoveThing :
     BE2_InstructionBase,
     I_BE2_Instruction
 {
+    public bool enableDebugLogs = false;
+
     StoryCharacterManager characterManager;
     StoryAnimalManager animalManager;
     StoryVehicleManager vehicleManager;
 
     public new void Function()
     {
+        if (Section0Inputs.Length < 5)
+        {
+            Debug.LogWarning("MoveThing needs Type, Number, X, Y, and Z.");
+            ExecuteNextInstruction();
+            return;
+        }
+
         if (characterManager == null)
             characterManager = Object.FindFirstObjectByType<StoryCharacterManager>();
 
@@ -24,19 +33,16 @@ public class BE2_Cst_MoveThing :
         string category = NormalizeCategory(Section0Inputs[0].StringValue);
         string number = Section0Inputs[1].StringValue.Trim();
 
-        float x = ReadFloat(2);
-        float y = ReadFloat(3);
-        float z = ReadFloat(4);
+        float x = Section0Inputs[2].FloatValue;
+        float y = Section0Inputs[3].FloatValue;
+        float z = Section0Inputs[4].FloatValue;
 
         string slotName = category + " " + number;
 
         Transform target = GetTarget(category, slotName);
 
-        Debug.Log("MoveThing fired");
-        Debug.Log("Category: " + category);
-        Debug.Log("Slot Name: " + slotName);
-        Debug.Log("X: " + x + " Y: " + y + " Z: " + z);
-        Debug.Log("Target: " + (target != null ? target.name : "NULL"));
+        if (enableDebugLogs)
+            Debug.Log("MoveThing: " + slotName + " by " + new Vector3(x, y, z));
 
         if (target != null)
             target.position += new Vector3(x, y, z);
@@ -58,16 +64,6 @@ public class BE2_Cst_MoveThing :
             return "Vehicle";
 
         return rawCategory.Trim();
-    }
-
-    float ReadFloat(int index)
-    {
-        if (Section0Inputs.Length <= index)
-            return 0f;
-
-        float value = 0f;
-        float.TryParse(Section0Inputs[index].StringValue.Trim(), out value);
-        return value;
     }
 
     Transform GetTarget(string category, string slotName)
